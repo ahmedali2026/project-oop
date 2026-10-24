@@ -1,0 +1,192 @@
+using System;
+
+namespace ExamSystemApp
+{
+    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Subject sub = new Subject(1, "C# Programming");
+            sub.CreateExam();
+        }
+    }
+
+    public class Answer : ICloneable
+    {
+        public int AnswerId { get; set; }
+        public string AnswerText { get; set; }
+
+        public Answer(int id, string text)
+        {
+            AnswerId = id;
+            AnswerText = text;
+        }
+
+        public object Clone()
+        {
+            return new Answer(this.AnswerId, this.AnswerText);
+        }
+
+        public override string ToString()
+        {
+            return $"{AnswerId}. {AnswerText}";
+        }
+    }
+
+    public abstract class Question : IComparable<Question>
+    {
+        public string Header { get; set; }
+        public string Body { get; set; }
+        public int Mark { get; set; }
+        public Answer[] AnswerList { get; set; }
+        public Answer RightAnswer { get; set; }
+
+        public Question(string header, string body, int mark, Answer[] answers, Answer rightAnswer)
+        {
+            Header = header;
+            Body = body;
+            Mark = mark;
+            AnswerList = answers;
+            RightAnswer = rightAnswer;
+        }
+
+        public abstract void Display();
+
+        public int CompareTo(Question other)
+        {
+            if (other == null) return 1;
+            return this.Mark.CompareTo(other.Mark);
+        }
+
+        public override string ToString()
+        {
+            return $"{Header} (Mark: {Mark}) - {Body}";
+        }
+    }
+
+    public class TrueFalseQuestion : Question
+    {
+        public TrueFalseQuestion(string header, string body, int mark, Answer[] answers, Answer rightAnswer)
+            : base(header, body, mark, answers, rightAnswer)
+        {
+        }
+
+        public override void Display()
+        {
+            Console.WriteLine($"{Header} [Mark: {Mark}]");
+            Console.WriteLine(Body);
+            foreach (var ans in AnswerList)
+            {
+                Console.WriteLine($"   {ans}");
+            }
+        }
+    }
+
+    public class MCQQuestion : Question
+    {
+        public MCQQuestion(string header, string body, int mark, Answer[] answers, Answer rightAnswer)
+            : base(header, body, mark, answers, rightAnswer)
+        {
+        }
+
+        public override void Display()
+        {
+            Console.WriteLine($"{Header} [Mark: {Mark}]");
+            Console.WriteLine(Body);
+            foreach (var ans in AnswerList)
+            {
+                Console.WriteLine($"   {ans}");
+            }
+        }
+    }
+
+    public abstract class Exam : ICloneable
+    {
+        public int TimeOfExam { get; set; }
+        public int NumberOfQuestions { get; set; }
+        public Question[] Questions { get; set; }
+
+        public Exam(int time, int numOfQuestions)
+        {
+            TimeOfExam = time;
+            NumberOfQuestions = numOfQuestions;
+        }
+
+        public abstract void ShowExam();
+
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+    }
+
+    public class FinalExam : Exam
+    {
+        public FinalExam(int time, int numOfQuestions) : base(time, numOfQuestions)
+        {
+        }
+
+        public override void ShowExam()
+        {
+            Console.WriteLine($"=== Final Exam (Time: {TimeOfExam} mins, Questions: {NumberOfQuestions}) ===");
+            if (Questions != null)
+            {
+                foreach (var q in Questions)
+                {
+                    q.Display();
+                    Console.WriteLine($"Your Answer: [User Input]");
+                    Console.WriteLine($"Right Answer: {q.RightAnswer}");
+                    Console.WriteLine(new string('-', 30));
+                }
+            }
+        }
+    }
+
+    public class PracticalExam : Exam
+    {
+        public PracticalExam(int time, int numOfQuestions) : base(time, numOfQuestions)
+        {
+        }
+
+        public override void ShowExam()
+        {
+            Console.WriteLine($"=== Practical Exam (Time: {TimeOfExam} mins, Questions: {NumberOfQuestions}) ===");
+            if (Questions != null)
+            {
+                foreach (var q in Questions)
+                {
+                    q.Display();
+                    Console.WriteLine($"Right Answer After Finishing: {q.RightAnswer}");
+                    Console.WriteLine(new string('-', 30));
+                }
+            }
+        }
+    }
+
+    public class Subject
+    {
+        public int SubjectId { get; set; }
+        public string SubjectName { get; set; }
+        public Exam ExamOfSubject { get; set; }
+
+        public Subject(int id, string name)
+        {
+            SubjectId = id;
+            SubjectName = name;
+        }
+
+        public void CreateExam()
+        {
+            Console.WriteLine($"Creating exam for subject: {SubjectName}");
+            
+            Answer[] tfAnswers = { new Answer(1, "True"), new Answer(2, "False") };
+            TrueFalseQuestion tfQ = new TrueFalseQuestion("TF Q1", "Is C# object-oriented?", 10, tfAnswers, tfAnswers[0]);
+
+            FinalExam finalExam = new FinalExam(60, 1);
+            finalExam.Questions = new Question[] { tfQ };
+            ExamOfSubject = finalExam;
+
+            ExamOfSubject.ShowExam();
+        }
+    }
+}
